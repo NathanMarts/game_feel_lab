@@ -50,6 +50,7 @@ func _ready() -> void:
 	randomize()
 	setup_input()
 	build_stage()
+	build_scenery()
 	build_animation_frames()
 	build_characters()
 	build_camera()
@@ -76,13 +77,39 @@ func bind_keys(action: String, keys: Array) -> void:
 
 func build_stage() -> void:
 	var platform := StaticBody2D.new()
-	platform.position = Vector2(240, 255)
+	platform.position = Vector2(720, 255)
 	var collision := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = Vector2(480, 30)
+	shape.size = Vector2(1440, 30)
 	collision.shape = shape
 	platform.add_child(collision)
 	add_child(platform)
+
+# Every layer is an image file, not a shape drawn in _draw().
+# Slower scroll_scale means a more distant layer.
+func build_scenery() -> void:
+	var specs: Array = [
+		["res://assets/scenery/sky.svg", 0.12],
+		["res://assets/scenery/distant.svg", 0.35],
+		["res://assets/scenery/mid.svg", 0.65],
+		["res://assets/scenery/ground.svg", 1.0],
+	]
+	for spec in specs:
+		var texture: Texture2D = load(spec[0]) as Texture2D
+		if texture == null:
+			push_error("Parallax asset missing: %s" % spec[0])
+			continue
+		var layer := Parallax2D.new()
+		layer.name = spec[0].get_file().get_basename().capitalize()
+		layer.scroll_scale = Vector2(float(spec[1]), 1.0)
+		layer.repeat_size = Vector2(480.0, 0.0)
+		layer.repeat_times = 3
+		var sprite := Sprite2D.new()
+		sprite.texture = texture
+		sprite.centered = false
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		layer.add_child(sprite)
+		add_child(layer)
 
 func build_characters() -> void:
 	player = CharacterBody2D.new()
@@ -138,6 +165,10 @@ void fragment() {
 func build_camera() -> void:
 	camera = Camera2D.new()
 	camera.position = Vector2(240, 135)
+	camera.limit_left = 0
+	camera.limit_right = 1440
+	camera.limit_top = 0
+	camera.limit_bottom = 270
 	add_child(camera)
 	camera.make_current()
 
@@ -166,9 +197,9 @@ func build_ui() -> void:
 	add_child(layer)
 	var title := make_label("GAME FEEL LAB  •  Alien Forest", Vector2(12, 9), 12, Color("#f5e9ad"))
 	layer.add_child(title)
-	var controls := make_label("A / D: mover   ESPAÇO: pular   J / clique: atacar", Vector2(12, 28), 9, Color("#d9e0f4"))
+	var controls := make_label("A/D: explorar  ESPAÇO: pular  J/clique: atacar", Vector2(12, 28), 9, Color("#d9e0f4"))
 	layer.add_child(controls)
-	var tip := make_label("Acerte o boneco à direita e ligue/desligue os efeitos.", Vector2(12, 42), 9, Color("#9fadc5"))
+	var tip := make_label("Explore a floresta; ataque o boneco e alterne os efeitos.", Vector2(12, 42), 9, Color("#9fadc5"))
 	layer.add_child(tip)
 	effects_label = make_label("", Vector2(341, 74), 10, Color("#ffffff"))
 	layer.add_child(effects_label)
@@ -239,7 +270,7 @@ func _physics_process(delta: float) -> void:
 		apply_squash(Vector2(0.74, 1.24), 0.22)
 		play_sfx("jump")
 	player.move_and_slide()
-	player.position.x = clampf(player.position.x, 12.0, 468.0)
+	player.position.x = clampf(player.position.x, 12.0, 1428.0)
 	if not was_on_floor and player.is_on_floor():
 		apply_squash(Vector2(1.27, 0.73), 0.28)
 		if effects["particles"]:
@@ -252,6 +283,9 @@ func _process(delta: float) -> void:
 	time_since_start += delta
 	animation_clock += delta
 	alien_clock += delta
+	# Keep the world larger than one screen so the parallax can actually scroll.
+	if camera != null and player != null:
+		camera.position.x = clampf(player.position.x, 240.0, 1200.0)
 	if player_sprite != null:
 		var moving: bool = absf(player.velocity.x) > 8.0 and player.is_on_floor()
 		var state: String = "walk" if moving else "idle"
@@ -409,53 +443,3 @@ func block(img: Image, x: int, y: int, w: int, h: int, hex: String) -> void:
 	img.fill_rect(Rect2i(x, y, w, h), Color(hex))
 
 # Alien forest: deterministic pixel layers, designed for future parallax extraction.
-func _draw() -> void:
-	draw_rect(Rect2(0, 0, 480, 270), Color("#141d39"))
-	# Nebula gradient bands.
-	for band in range(15):
-		var tint: Color = Color("#27365c").lerp(Color("#74518a"), float(band) / 15.0)
-		draw_rect(Rect2(0, band * 8, 480, 8), tint)
-	# Huge ringed planet and a second moon.
-	draw_arc(Vector2(393, 65), 71.0, -0.45, 2.7, 96, Color("#d8a8d6"), 5.0)
-	draw_arc(Vector2(393, 65), 75.0, -0.45, 2.7, 96, Color("#916db8"), 2.0)
-	draw_circle(Vector2(393, 65), 55.0, Color("#aa82be"))
-	draw_circle(Vector2(377, 44), 32.0, Color("#c29bc8"))
-	draw_circle(Vector2(271, 65), 18.0, Color("#6073a8"))
-	for i in range(47):
-		var sx: float = float((i * 97 + 27) % 480)
-		var sy: float = float((i * 47 + 17) % 132)
-		draw_rect(Rect2(sx, sy, 1, 1), Color("#c6dbed"))
-	# Far-away silhouettes: layered canopy, giant stalks and vegetation.
-	for i in range(18):
-		var fx: float = float(i * 32 - 10)
-		var h: float = float(22 + (i * 13) % 29)
-		draw_rect(Rect2(fx + 13, 185 - h, 7, h + 52), Color("#293a58"))
-		draw_circle(Vector2(fx + 16, 179 - h), 20.0, Color("#38496b"))
-		draw_circle(Vector2(fx + 4, 181 - h), 12.0, Color("#455679"))
-	# Front foliage: overgrown platform, luminous spores, mushrooms.
-	draw_rect(Rect2(0, 238, 480, 32), Color("#283d41"))
-	draw_rect(Rect2(0, 238, 480, 4), Color("#56866e"))
-	for i in range(36):
-		var px: float = float((i * 71 + 17) % 480)
-		var py: float = float(243 + (i * 13) % 24)
-		draw_rect(Rect2(px, py, 9, 3), Color("#345c56"))
-	for i in range(12):
-		var x: float = float((i * 103 + 36) % 480)
-		var height: float = float(7 + (i % 3) * 4)
-		draw_line(Vector2(x, 238), Vector2(x - 2, 238 - height), Color("#477d72"), 2.0)
-		draw_circle(Vector2(x - 2, 238 - height), 3.0, Color("#53d6ba"))
-	# Bioluminescent insect-flowers.
-	for i in range(8):
-		var px: float = float((i * 89 + 55) % 480)
-		var py: float = float(213 + (i % 3) * 7)
-		draw_line(Vector2(px, 238), Vector2(px, py), Color("#587f69"), 2.0)
-		draw_circle(Vector2(px, py), 4.0, Color("#4ce7e3"))
-		draw_circle(Vector2(px - 5, py + 2), 3.0, Color("#8964ba"))
-		draw_circle(Vector2(px + 5, py + 2), 3.0, Color("#8964ba"))
-	# Creature silhouettes in the background: dragonfly-insects.
-	for i in range(3):
-		var ix: float = 71.0 + float(i * 146)
-		var iy: float = 148.0 + float(i % 2) * 21.0 + sin(alien_clock * 2.0 + i) * 3.0
-		draw_circle(Vector2(ix, iy), 4.0, Color("#263448"))
-		draw_line(Vector2(ix - 2, iy), Vector2(ix - 11, iy - 5), Color("#67b7b1"), 2.0)
-		draw_line(Vector2(ix + 2, iy), Vector2(ix + 11, iy - 5), Color("#67b7b1"), 2.0)
