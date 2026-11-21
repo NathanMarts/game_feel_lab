@@ -38,11 +38,16 @@ var tween_dummy: Tween
 var hitstop_running := false
 var time_since_start := 0.0
 var audio_nodes := {}
+var idle_frames: Array[Texture2D] = []
+var walk_frames: Array[Texture2D] = []
+var animation_clock: float = 0.0
+var alien_clock: float = 0.0
 
 func _ready() -> void:
 	randomize()
 	setup_input()
 	build_stage()
+	build_animation_frames()
 	build_characters()
 	build_camera()
 	build_audio()
@@ -90,7 +95,7 @@ func build_characters() -> void:
 	player_visual.name = "VisualOnly_DoNotScaleCollision"
 	player.add_child(player_visual)
 	player_sprite = Sprite2D.new()
-	player_sprite.texture = create_player_texture()
+	player_sprite.texture = idle_frames[0]
 	player_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	player_visual.add_child(player_sprite)
 
@@ -238,9 +243,18 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	time_since_start += delta
+	animation_clock += delta
+	alien_clock += delta
+	if player_sprite != null:
+		var moving: bool = absf(player.velocity.x) > 8.0 and player.is_on_floor()
+		var frames: Array[Texture2D] = walk_frames if moving else idle_frames
+		var fps: float = 10.0 if moving else 4.0
+		var index: int = int(floor(animation_clock * fps)) % frames.size()
+		player_sprite.texture = frames[index]
+	queue_redraw()
 	if shake_left > 0:
 		shake_left -= delta
-		var intensity: float = shake_strength * max(shake_left / shake_duration, 0)
+		var intensity: float = shake_strength * maxf(shake_left / shake_duration, 0.0)
 		camera.offset = Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
 	else:
 		camera.offset = Vector2.ZERO
@@ -347,23 +361,43 @@ func floating_damage(at: Vector2) -> void:
 	t.set_parallel(false)
 	t.tween_callback(label.queue_free)
 
-func create_player_texture() -> Texture2D:
-	var im := Image.create(24, 32, false, Image.FORMAT_RGBA8)
+# Character art is generated frame-by-frame on a strict 32x40 canvas.
+# All frames share an x=16 center line and y=38 ground baseline.
+func build_animation_frames() -> void:
+	for i in range(4):
+		idle_frames.append(draw_traveler_frame(i, false))
+	for i in range(6):
+		walk_frames.append(draw_traveler_frame(i, true))
+
+func draw_traveler_frame(frame: int, walking: bool) -> Texture2D:
+	var im := Image.create(32, 40, false, Image.FORMAT_RGBA8)
 	im.fill(Color.TRANSPARENT)
-	block(im, 7, 26, 4, 4, "#172036")
-	block(im, 14, 26, 4, 4, "#172036")
-	block(im, 6, 13, 13, 14, "#4e6db1")
-	block(im, 4, 16, 4, 9, "#324b87")
-	block(im, 17, 16, 4, 9, "#324b87")
-	block(im, 6, 5, 13, 12, "#203658")
-	block(im, 4, 8, 17, 5, "#203658")
-	block(im, 7, 10, 11, 7, "#e6c5a3")
-	block(im, 9, 12, 2, 2, "#172036")
-	block(im, 15, 12, 2, 2, "#172036")
-	block(im, 6, 3, 13, 5, "#293966")
-	block(im, 9, 0, 6, 5, "#293966")
-	block(im, 3, 8, 18, 3, "#556fac")
-	block(im, 9, 17, 6, 8, "#b0cbff")
+	var bob: int = (1 if frame == 2 else 0) if not walking else (1 if frame in [1, 4] else 0)
+	var stride: int = [0, 3, 5, 0, -5, -3][frame] if walking else 0
+	# Boots and articulated legs: both stay within the same fixed cell.
+	block(im, 10 - stride / 2, 31 + bob, 5, 6, "#202338")
+	block(im, 18 + stride / 2, 31 + bob, 5, 6, "#202338")
+	block(im, 9 - stride / 2, 36 + bob, 7, 2, "#a3bdd0")
+	block(im, 17 + stride / 2, 36 + bob, 7, 2, "#a3bdd0")
+	# Traveler's off-white cloak, backpack and blue energy clasp.
+	block(im, 8, 17 + bob, 17, 16, "#293952")
+	block(im, 6, 19 + bob, 6, 11, "#a45165")
+	block(im, 10, 18 + bob, 13, 14, "#d2c9b2")
+	block(im, 10, 27 + bob, 13, 5, "#aaa397")
+	block(im, 7, 18 + bob, 4, 13, "#e9dcc5")
+	block(im, 23, 18 + bob, 4, 12, "#d6c8b2")
+	block(im, 14, 22 + bob, 5, 4, "#4ee2f7")
+	# Helmet silhouette is identical across both animation cycles.
+	block(im, 9, 6 + bob, 16, 14, "#e6dfcc")
+	block(im, 6, 10 + bob, 20, 7, "#d2c9b2")
+	block(im, 11, 10 + bob, 12, 8, "#17263b")
+	block(im, 13, 13 + bob, 3, 3, "#56eaff")
+	block(im, 19, 13 + bob, 3, 3, "#56eaff")
+	block(im, 10, 5 + bob, 10, 3, "#faf0d7")
+	block(im, 8, 8 + bob, 3, 3, "#ece3d1")
+	# Tiny antenna / planetary signal.
+	block(im, 20, 3 + bob, 2, 5, "#b7c9d3")
+	block(im, 19, 1 + bob, 4, 3, "#6aefdc")
 	return ImageTexture.create_from_image(im)
 
 func create_dummy_texture() -> Texture2D:
@@ -382,20 +416,54 @@ func create_dummy_texture() -> Texture2D:
 func block(img: Image, x: int, y: int, w: int, h: int, hex: String) -> void:
 	img.fill_rect(Rect2i(x, y, w, h), Color(hex))
 
+# Alien forest: deterministic pixel layers, designed for future parallax extraction.
 func _draw() -> void:
-	draw_rect(Rect2(0, 0, 480, 270), Color("#101725"))
-	for i in 25:
-		var x := (i * 37 + 11) % 480
-		var y := (i * 23 + 67) % 230
-		draw_rect(Rect2(x, y, 2, 2), Color("#243147"))
-	draw_rect(Rect2(0, 238, 480, 32), Color("#253e44"))
-	draw_rect(Rect2(0, 238, 480, 3), Color("#5c8b72"))
-	for i in 32:
-		var x := (i * 49) % 480
-		draw_rect(Rect2(x, 245 + (i % 3) * 6, 16, 2), Color("#36565a"))
-	draw_rect(Rect2(78, 194, 29, 45), Color("#1a293b"))
-	draw_rect(Rect2(82, 187, 21, 8), Color("#32495c"))
-	draw_rect(Rect2(257, 202, 30, 36), Color("#1a293b"))
-	draw_rect(Rect2(253, 198, 38, 7), Color("#344557"))
-	draw_circle(Vector2(419, 54), 21, Color("#28364f"))
-	draw_circle(Vector2(419, 54), 17, Color("#435471"))
+	draw_rect(Rect2(0, 0, 480, 270), Color("#141d39"))
+	# Nebula gradient bands.
+	for band in range(15):
+		var tint: Color = Color("#27365c").lerp(Color("#74518a"), float(band) / 15.0)
+		draw_rect(Rect2(0, band * 8, 480, 8), tint)
+	# Huge ringed planet and a second moon.
+	draw_arc(Vector2(393, 65), 71.0, -0.45, 2.7, 96, Color("#d8a8d6"), 5.0)
+	draw_arc(Vector2(393, 65), 75.0, -0.45, 2.7, 96, Color("#916db8"), 2.0)
+	draw_circle(Vector2(393, 65), 55.0, Color("#aa82be"))
+	draw_circle(Vector2(377, 44), 32.0, Color("#c29bc8"))
+	draw_circle(Vector2(271, 65), 18.0, Color("#6073a8"))
+	for i in range(47):
+		var sx: float = float((i * 97 + 27) % 480)
+		var sy: float = float((i * 47 + 17) % 132)
+		draw_rect(Rect2(sx, sy, 1, 1), Color("#c6dbed"))
+	# Far-away silhouettes: layered canopy, giant stalks and vegetation.
+	for i in range(18):
+		var fx: float = float(i * 32 - 10)
+		var h: float = float(22 + (i * 13) % 29)
+		draw_rect(Rect2(fx + 13, 185 - h, 7, h + 52), Color("#293a58"))
+		draw_circle(Vector2(fx + 16, 179 - h), 20.0, Color("#38496b"))
+		draw_circle(Vector2(fx + 4, 181 - h), 12.0, Color("#455679"))
+	# Front foliage: overgrown platform, luminous spores, mushrooms.
+	draw_rect(Rect2(0, 238, 480, 32), Color("#283d41"))
+	draw_rect(Rect2(0, 238, 480, 4), Color("#56866e"))
+	for i in range(36):
+		var px: float = float((i * 71 + 17) % 480)
+		var py: float = float(243 + (i * 13) % 24)
+		draw_rect(Rect2(px, py, 9, 3), Color("#345c56"))
+	for i in range(12):
+		var x: float = float((i * 103 + 36) % 480)
+		var height: float = float(7 + (i % 3) * 4)
+		draw_line(Vector2(x, 238), Vector2(x - 2, 238 - height), Color("#477d72"), 2.0)
+		draw_circle(Vector2(x - 2, 238 - height), 3.0, Color("#53d6ba"))
+	# Bioluminescent insect-flowers.
+	for i in range(8):
+		var px: float = float((i * 89 + 55) % 480)
+		var py: float = float(213 + (i % 3) * 7)
+		draw_line(Vector2(px, 238), Vector2(px, py), Color("#587f69"), 2.0)
+		draw_circle(Vector2(px, py), 4.0, Color("#4ce7e3"))
+		draw_circle(Vector2(px - 5, py + 2), 3.0, Color("#8964ba"))
+		draw_circle(Vector2(px + 5, py + 2), 3.0, Color("#8964ba"))
+	# Creature silhouettes in the background: dragonfly-insects.
+	for i in range(3):
+		var ix: float = 71.0 + float(i * 146)
+		var iy: float = 148.0 + float(i % 2) * 21.0 + sin(alien_clock * 2.0 + i) * 3.0
+		draw_circle(Vector2(ix, iy), 4.0, Color("#263448"))
+		draw_line(Vector2(ix - 2, iy), Vector2(ix - 11, iy - 5), Color("#67b7b1"), 2.0)
+		draw_line(Vector2(ix + 2, iy), Vector2(ix + 11, iy - 5), Color("#67b7b1"), 2.0)
