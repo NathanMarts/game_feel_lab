@@ -91,15 +91,18 @@ func build_stage() -> void:
 # Every layer is an image file, not a shape drawn in _draw().
 # Slower scroll_scale means a more distant layer.
 func build_scenery() -> void:
+	# The first layer is an actual AI-generated background image.
+	# Transparent vector layers add depth without hiding the painted biome.
 	var specs: Array = [
-		["res://assets/scenery/sky.svg", 0.12],
-		["res://assets/scenery/distant.svg", 0.35],
-		["res://assets/scenery/mid.svg", 0.65],
-		["res://assets/scenery/ground.svg", 1.0],
+		["res://assets/scenery/alien_forest.jpg", 0.12, 1.0],
+		["res://assets/scenery/distant.svg", 0.35, 0.27],
+		["res://assets/scenery/mid.svg", 0.65, 0.30],
+		["res://assets/scenery/ground.svg", 1.0, 1.0],
 	]
 	for spec in specs:
 		var file_path: String = str(spec[0])
 		var speed: float = float(spec[1])
+		var alpha: float = float(spec[2])
 		var texture: Texture2D = load(file_path) as Texture2D
 		if texture == null:
 			push_error("Parallax asset missing: %s" % file_path)
@@ -111,6 +114,7 @@ func build_scenery() -> void:
 		layer.repeat_times = 3
 		var sprite := Sprite2D.new()
 		sprite.texture = texture
+		sprite.modulate = Color(1.0, 1.0, 1.0, alpha)
 		sprite.centered = false
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		layer.add_child(sprite)
