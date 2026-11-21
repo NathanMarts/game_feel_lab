@@ -42,6 +42,7 @@ var idle_frames: Array[Texture2D] = []
 var walk_frames: Array[Texture2D] = []
 var animation_clock: float = 0.0
 var alien_clock: float = 0.0
+var current_animation: String = "idle"
 
 func _ready() -> void:
 	randomize()
@@ -96,6 +97,10 @@ func build_characters() -> void:
 	player.add_child(player_visual)
 	player_sprite = Sprite2D.new()
 	player_sprite.texture = idle_frames[0]
+	# The physical collider keeps its old dimensions; only the art is scaled.
+	# Each 48 px atlas cell has a fixed foot baseline at y≈46.
+	player_sprite.scale = Vector2(0.82, 0.82)
+	player_sprite.offset = Vector2(0.0, -5.0)
 	player_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	player_visual.add_child(player_sprite)
 
@@ -157,7 +162,7 @@ func play_sfx(kind: String) -> void:
 func build_ui() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	var title := make_label("GAME FEEL LAB  •  Godot 4", Vector2(12, 9), 12, Color("#f5e9ad"))
+	var title := make_label("GAME FEEL LAB  •  Alien Forest", Vector2(12, 9), 12, Color("#f5e9ad"))
 	layer.add_child(title)
 	var controls := make_label("A / D: mover   ESPAÇO: pular   J / clique: atacar", Vector2(12, 28), 9, Color("#d9e0f4"))
 	layer.add_child(controls)
@@ -247,6 +252,10 @@ func _process(delta: float) -> void:
 	alien_clock += delta
 	if player_sprite != null:
 		var moving: bool = absf(player.velocity.x) > 8.0 and player.is_on_floor()
+		var state: String = "walk" if moving else "idle"
+		if state != current_animation:
+			current_animation = state
+			animation_clock = 0.0
 		var frames: Array[Texture2D] = walk_frames if moving else idle_frames
 		var fps: float = 10.0 if moving else 4.0
 		var index: int = int(floor(animation_clock * fps)) % frames.size()
@@ -361,44 +370,28 @@ func floating_damage(at: Vector2) -> void:
 	t.set_parallel(false)
 	t.tween_callback(label.queue_free)
 
-# Character art is generated frame-by-frame on a strict 32x40 canvas.
-# All frames share an x=16 center line and y=38 ground baseline.
-func build_animation_frames() -> void:
-	for i in range(4):
-		idle_frames.append(draw_traveler_frame(i, false))
-	for i in range(6):
-		walk_frames.append(draw_traveler_frame(i, true))
+# Pixel-art traveler frames are cropped directly from a real transparent PNG.
+# Grid: 5 columns × 2 rows, 48×48 pixels per cell. No runtime resizing of cells.
+const TRAVELER_FRAME: int = 48
+const TRAVELER_FRAMES_PER_ROW: int = 5
 
-func draw_traveler_frame(frame: int, walking: bool) -> Texture2D:
-	var im := Image.create(32, 40, false, Image.FORMAT_RGBA8)
-	im.fill(Color.TRANSPARENT)
-	var bob: int = (1 if frame == 2 else 0) if not walking else (1 if frame in [1, 4] else 0)
-	var stride: int = [0, 3, 5, 0, -5, -3][frame] if walking else 0
-	# Boots and articulated legs: both stay within the same fixed cell.
-	block(im, 10 - int(stride / 2.0), 31 + bob, 5, 6, "#202338")
-	block(im, 18 + int(stride / 2.0), 31 + bob, 5, 6, "#202338")
-	block(im, 9 - int(stride / 2.0), 36 + bob, 7, 2, "#a3bdd0")
-	block(im, 17 + int(stride / 2.0), 36 + bob, 7, 2, "#a3bdd0")
-	# Traveler's off-white cloak, backpack and blue energy clasp.
-	block(im, 8, 17 + bob, 17, 16, "#293952")
-	block(im, 6, 19 + bob, 6, 11, "#a45165")
-	block(im, 10, 18 + bob, 13, 14, "#d2c9b2")
-	block(im, 10, 27 + bob, 13, 5, "#aaa397")
-	block(im, 7, 18 + bob, 4, 13, "#e9dcc5")
-	block(im, 23, 18 + bob, 4, 12, "#d6c8b2")
-	block(im, 14, 22 + bob, 5, 4, "#4ee2f7")
-	# Helmet silhouette is identical across both animation cycles.
-	block(im, 9, 6 + bob, 16, 14, "#e6dfcc")
-	block(im, 6, 10 + bob, 20, 7, "#d2c9b2")
-	block(im, 11, 10 + bob, 12, 8, "#17263b")
-	block(im, 13, 13 + bob, 3, 3, "#56eaff")
-	block(im, 19, 13 + bob, 3, 3, "#56eaff")
-	block(im, 10, 5 + bob, 10, 3, "#faf0d7")
-	block(im, 8, 8 + bob, 3, 3, "#ece3d1")
-	# Tiny antenna / planetary signal.
-	block(im, 20, 3 + bob, 2, 5, "#b7c9d3")
-	block(im, 19, 1 + bob, 4, 3, "#6aefdc")
-	return ImageTexture.create_from_image(im)
+func build_animation_frames() -> void:
+	var sheet: Texture2D = load("res://assets/traveler_sheet.png") as Texture2D
+	if sheet == null:
+		push_error("Traveler PNG not found: res://assets/traveler_sheet.png")
+		return
+	for frame in range(TRAVELER_FRAMES_PER_ROW):
+		idle_frames.append(make_sprite_frame(sheet, frame, 0))
+		walk_frames.append(make_sprite_frame(sheet, frame, 1))
+
+func make_sprite_frame(sheet: Texture2D, column: int, row: int) -> Texture2D:
+	var atlas_texture := AtlasTexture.new()
+	atlas_texture.atlas = sheet
+	atlas_texture.region = Rect2(
+		column * TRAVELER_FRAME, row * TRAVELER_FRAME,
+		TRAVELER_FRAME, TRAVELER_FRAME
+	)
+	return atlas_texture
 
 func create_dummy_texture() -> Texture2D:
 	var im := Image.create(24, 32, false, Image.FORMAT_RGBA8)
