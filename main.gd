@@ -118,7 +118,7 @@ func build_scenery() -> void:
 		for copy_index in range(2):
 			var sprite := Sprite2D.new()
 			sprite.texture = texture
-				sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			sprite.centered = false
 			sprite.flip_h = copy_index == 1
 			sprite.position.x = float(copy_index) * 480.0
