@@ -91,33 +91,43 @@ func build_stage() -> void:
 # Every layer is an image file, not a shape drawn in _draw().
 # Slower scroll_scale means a more distant layer.
 func build_scenery() -> void:
-	# The first layer is an actual AI-generated background image.
-	# Transparent vector layers add depth without hiding the painted biome.
+	# Native-resolution PNG art (1672x941) is scaled only for display, never resampled on disk.
+	# Extract assets/scenery/*.png from the high-resolution art pack into this repository.
 	var specs: Array = [
-		["res://assets/scenery/alien_forest.jpg", 0.12, 1.0],
-		["res://assets/scenery/distant.svg", 0.35, 0.27],
-		["res://assets/scenery/mid.svg", 0.65, 0.30],
-		["res://assets/scenery/ground.svg", 1.0, 1.0],
+		["res://assets/scenery/sky.png", 0.08],
+		["res://assets/scenery/distant.png", 0.23],
+		["res://assets/scenery/midground.png", 0.55],
+		["res://assets/scenery/flora.png", 0.82],
+		["res://assets/scenery/ground.png", 1.0],
 	]
+	if not ResourceLoader.exists("res://assets/scenery/sky.png"):
+		push_warning("High-resolution PNG scenery is not installed. Extract the PNG art pack into the project.")
+		# One static legacy JPG until the PNGs are installed; deliberately do not use SVGs.
+		specs = [["res://assets/scenery/alien_forest.jpg", 0.15]]
 	for spec in specs:
 		var file_path: String = str(spec[0])
 		var speed: float = float(spec[1])
-		var alpha: float = float(spec[2])
 		var texture: Texture2D = load(file_path) as Texture2D
 		if texture == null:
-			push_error("Parallax asset missing: %s" % file_path)
+			push_error("Missing scenery PNG: %s" % file_path)
 			continue
 		var layer := Parallax2D.new()
 		layer.name = file_path.get_file().get_basename().capitalize()
 		layer.scroll_scale = Vector2(speed, 1.0)
-		layer.repeat_size = Vector2(480.0, 0.0)
+		# The second image mirrors the first to create a seamless 960-unit repeat.
+		layer.repeat_size = Vector2(960.0, 0.0)
 		layer.repeat_times = 3
-		var sprite := Sprite2D.new()
-		sprite.texture = texture
-		sprite.modulate = Color(1.0, 1.0, 1.0, alpha)
-		sprite.centered = false
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		layer.add_child(sprite)
+		var frame_size := Vector2(float(texture.get_width()), float(texture.get_height()))
+		var display_scale := Vector2(480.0 / frame_size.x, 270.0 / frame_size.y)
+		for copy_index in range(2):
+			var sprite := Sprite2D.new()
+			sprite.texture = texture
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sprite.centered = false
+			sprite.flip_h = copy_index == 1
+			sprite.position.x = float(copy_index) * 480.0
+			sprite.scale = display_scale
+			layer.add_child(sprite)
 		add_child(layer)
 		parallax_layers.append(layer)
 		parallax_speeds.append(speed)
