@@ -1,6 +1,6 @@
 # Game Feel Lab — Godot 4
 
-Uma sala de testes para sentir a diferença que os efeitos de *game feel* fazem em um metroidvania 2D. O projeto não usa sprites externos, plug-ins nem assets de terceiros: os dois personagens são desenhados em pixels por código, e os sons são sintetizados.
+Uma sala de testes para sentir a diferença que os efeitos de *game feel* fazem em um metroidvania 2D. O viajante agora usa uma spritesheet PNG transparente gerada com apoio de IA. O boneco de treino ainda é desenhado em pixels por código; os sons continuam sintetizados. Não há dependências de plug-ins.
 
 ## Como rodar
 
@@ -48,7 +48,7 @@ Uma sala de testes para sentir a diferença que os efeitos de *game feel* fazem 
 | `create_timer(0.055, ...)` | 0.025 (sutil), 0.09 (marcado) |
 | `apply_squash(Vector2(1.27, 0.73), 0.28)` | 1.1 / 0.9 (sutil) |
 
-**Nota:** a arte foi mantida intencionalmente rudimentar. A meta é verificar que o jogador sente os impactos e movimentos antes de investir em sprites, personagens e mundo.
+**Nota:** o laboratório mantém um cenário procedural e um boneco de treino simples, enquanto o viajante já usa arte em imagem real. Ainda estamos testando e refinando os frames, sem tratar a arte como final.
 
 Este protótipo foi escrito para Godot 4 e não depende de recursos pagos.
 
@@ -79,3 +79,19 @@ Cada frame é uma imagem transparente **32×40 px** com centro horizontal fixo (
 5. Compare o alinhamento visual dos pés enquanto o personagem se move.
 
 A arte de referência conceitual serve como direção de estilo; não foi aplicada como imagem única de fundo, pois isso impediria camadas de parallax e reutilização modular.
+
+
+## Viajante em spritesheet (nova versão)
+
+![Spritesheet do viajante — idle e corrida](assets/traveler_sheet.png)
+
+- **Arte real:** `assets/traveler_sheet.png` (240×96 px), transparência e grade fixa 5×2.
+- **Idle:** 5 frames a 4 fps (primeira linha).
+- **Corrida:** 5 frames a 10 fps (segunda linha).
+- **Integração:** `AtlasTexture` no `main.gd`; o collider continua separado da escala visual.
+- **Teste de qualidade:** `python -m pip install Pillow && python tools/validate_sprites.py`.
+- **Contrato e processo:** [`docs/SPRITE_PIPELINE.md`](docs/SPRITE_PIPELINE.md).
+
+O fundo é uma floresta alienígena procedural com flora bioluminescente, insetos voadores e planetas ao longe. O parallax ainda será uma etapa futura. A aparência conceitual gerada anteriormente é uma **direção de arte**, não um screenshot real do estado atual.
+
+> A spritesheet foi conferida por análise de pixels e grid; a renderização na Godot precisa ser verificada no editor após o pull.
