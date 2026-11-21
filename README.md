@@ -51,3 +51,31 @@ Uma sala de testes para sentir a diferença que os efeitos de *game feel* fazem 
 **Nota:** a arte foi mantida intencionalmente rudimentar. A meta é verificar que o jogador sente os impactos e movimentos antes de investir em sprites, personagens e mundo.
 
 Este protótipo foi escrito para Godot 4 e não depende de recursos pagos.
+
+
+## Floresta alienígena — experimento visual
+
+O laboratório agora representa a superfície de um planeta coberto por flora bioluminescente, árvores gigantes e insetos voadores. Ao fundo há um planeta com anéis e uma lua. O cenário é desenhado no `_draw()` de `main.gd`; as camadas estão organizadas para futuramente serem extraídas para um `Parallax2D`.
+
+### Viajante interplanetário
+
+O protagonista usa traje claro, visor luminoso, mochila e antena. As animações são geradas proceduralmente por `draw_traveler_frame()`, sem sprites externos:
+
+| Animação | Frames | Ritmo |
+|---|---:|---:|
+| Idle | 4 | 4 fps |
+| Walk | 6 | 10 fps |
+
+Cada frame é uma imagem transparente **32×40 px** com centro horizontal fixo (`x=16`) e base dos pés em `y=38` (com pequena variação vertical intencional no ciclo). O sistema troca frames sem ajustar a posição do nó ou o collider. O filtro de textura mantém os pixels nítidos.
+
+**Nota de qualidade:** esta é uma implementação procedural de referência, não uma spritesheet artística final. O próximo passo é substituir os frames por pixel art desenhada, mantendo dimensões, pivô e silhueta consistentes.
+
+### Teste sugerido
+
+1. Execute F5.
+2. Fique parado e observe o idle.
+3. Ande com A/D para alternar para a caminhada.
+4. Pule e ataque; os efeitos originais do laboratório continuam disponíveis.
+5. Compare o alinhamento visual dos pés enquanto o personagem se move.
+
+A arte de referência conceitual serve como direção de estilo; não foi aplicada como imagem única de fundo, pois isso impediria camadas de parallax e reutilização modular.
