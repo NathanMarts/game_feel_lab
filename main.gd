@@ -375,10 +375,10 @@ func draw_traveler_frame(frame: int, walking: bool) -> Texture2D:
 	var bob: int = (1 if frame == 2 else 0) if not walking else (1 if frame in [1, 4] else 0)
 	var stride: int = [0, 3, 5, 0, -5, -3][frame] if walking else 0
 	# Boots and articulated legs: both stay within the same fixed cell.
-	block(im, 10 - stride / 2, 31 + bob, 5, 6, "#202338")
-	block(im, 18 + stride / 2, 31 + bob, 5, 6, "#202338")
-	block(im, 9 - stride / 2, 36 + bob, 7, 2, "#a3bdd0")
-	block(im, 17 + stride / 2, 36 + bob, 7, 2, "#a3bdd0")
+	block(im, 10 - int(stride / 2.0), 31 + bob, 5, 6, "#202338")
+	block(im, 18 + int(stride / 2.0), 31 + bob, 5, 6, "#202338")
+	block(im, 9 - int(stride / 2.0), 36 + bob, 7, 2, "#a3bdd0")
+	block(im, 17 + int(stride / 2.0), 36 + bob, 7, 2, "#a3bdd0")
 	# Traveler's off-white cloak, backpack and blue energy clasp.
 	block(im, 8, 17 + bob, 17, 16, "#293952")
 	block(im, 6, 19 + bob, 6, 11, "#a45165")
