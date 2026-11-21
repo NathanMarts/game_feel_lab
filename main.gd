@@ -8,6 +8,8 @@ const FRICTION := 1400.0
 const GRAVITY := 800.0
 const JUMP_SPEED := -302.0
 const HIT_DISTANCE := 48.0
+const TRAVELER_FRAME: int = 48
+const TRAVELER_FRAMES_PER_ROW: int = 5
 
 var effects := {
 	"flash": true,
@@ -372,9 +374,6 @@ func floating_damage(at: Vector2) -> void:
 
 # Pixel-art traveler frames are cropped directly from a real transparent PNG.
 # Grid: 5 columns × 2 rows, 48×48 pixels per cell. No runtime resizing of cells.
-const TRAVELER_FRAME: int = 48
-const TRAVELER_FRAMES_PER_ROW: int = 5
-
 func build_animation_frames() -> void:
 	var sheet: Texture2D = load("res://assets/traveler_sheet.png") as Texture2D
 	if sheet == null:
