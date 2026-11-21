@@ -115,16 +115,16 @@ Valide as dimensões e o pivô com `python tools/check_traveler.py` (instale `pi
 
 ## Experimento: floresta com parallax (nov/2026)
 
-A sala agora tem **três telas de largura (1440×270)**, câmera seguindo o viajante e **quatro imagens SVG em camadas** em `assets/scenery/`:
+A sala agora tem **três telas de largura (1440×270)**, câmera seguindo o viajante e **quatro camadas de imagens** em `assets/scenery/`. A camada mais distante é uma imagem gerada para a floresta alienígena, otimizada para 480×270; as outras são SVGs transparentes independentes:
 
 | Camada | Arquivo | `scroll_scale.x` |
 |---|---|---:|
-| Céu, estrelas e planetas | `sky.svg` | 0.12 |
+| Fundo ilustrado com planeta, árvores e ruínas | `alien_forest.jpg` | 0.12 |
 | Silhuetas e ruínas distantes | `distant.svg` | 0.35 |
 | Árvore alienígena e cipós | `mid.svg` | 0.65 |
 | Solo, flores e plantas luminosas | `ground.svg` | 1.00 |
 
-As camadas são **arquivos de imagem reais** (SVG importado pela Godot), e não mais círculos e retângulos desenhados no `_draw()`. Foram criadas para serem independentes e repetíveis; **a imagem conceitual mais detalhada ainda não foi convertida nesses quatro assets**.
+As camadas são **arquivos de imagem reais** (JPEG e SVGs importados pela Godot), e não mais círculos e retângulos desenhados no `_draw()`. A arte de fundo foi gerada por IA e comprimida para manter o repositório leve. O JPEG não tem a resolução da referência conceitual completa, mas já é renderizado no jogo. O antigo `sky.svg` permanece como experimento alternativo.
 
 - **A/D** para explorar até os limites do mundo e ver a diferença entre velocidades de cenário.
 - **7** para ligar/desligar parallax; quando desligado, todas as camadas usam `scroll_scale.x = 1`.
