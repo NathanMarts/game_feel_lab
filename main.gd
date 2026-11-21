@@ -95,13 +95,15 @@ func build_scenery() -> void:
 		["res://assets/scenery/ground.svg", 1.0],
 	]
 	for spec in specs:
-		var texture: Texture2D = load(spec[0]) as Texture2D
+		var file_path: String = str(spec[0])
+		var speed: float = float(spec[1])
+		var texture: Texture2D = load(file_path) as Texture2D
 		if texture == null:
-			push_error("Parallax asset missing: %s" % spec[0])
+			push_error("Parallax asset missing: %s" % file_path)
 			continue
 		var layer := Parallax2D.new()
-		layer.name = spec[0].get_file().get_basename().capitalize()
-		layer.scroll_scale = Vector2(float(spec[1]), 1.0)
+		layer.name = file_path.get_file().get_basename().capitalize()
+		layer.scroll_scale = Vector2(speed, 1.0)
 		layer.repeat_size = Vector2(480.0, 0.0)
 		layer.repeat_times = 3
 		var sprite := Sprite2D.new()
