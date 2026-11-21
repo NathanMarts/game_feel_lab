@@ -92,7 +92,7 @@ A arte de referência conceitual serve como direção de estilo; não foi aplica
 - **Teste de qualidade:** `python -m pip install Pillow && python tools/validate_sprites.py`.
 - **Contrato e processo:** [`docs/SPRITE_PIPELINE.md`](docs/SPRITE_PIPELINE.md).
 
-O fundo é uma floresta alienígena procedural com flora bioluminescente, insetos voadores e planetas ao longe. O parallax ainda será uma etapa futura. A aparência conceitual gerada anteriormente é uma **direção de arte**, não um screenshot real do estado atual.
+O cenário agora utiliza camadas PNG em alta resolução com `Parallax2D`, mantendo os controles e os efeitos de game feel.
 
 > A spritesheet foi conferida por análise de pixels e grid; a renderização na Godot precisa ser verificada no editor após o pull.
 
@@ -114,31 +114,22 @@ Valide as dimensões e o pivô com `python tools/check_traveler.py` (instale `pi
 
 
 
-## Cenário alienígena com PNG em resolução original
+## Floresta alienígena — PNG nativo, sem SVG ou JPG
 
-A versão atual **não usa SVG para renderizar o cenário**. O novo material de arte contém cinco imagens PNG **1672×941 px** com transparência nas camadas adequadas. Não existe redução de imagem para 480×270 durante a exportação; o código dimensiona as texturas apenas na hora de desenhá-las.
+O repositório já inclui **todas as cinco imagens PNG 1672×941** em `assets/scenery/`. Nenhuma imagem foi exportada em 480×270. A Godot redimensiona apenas a exibição do atlas, sem substituir o original.
 
-| Camada | Arquivo | Deslocamento |
-|---|---|---:|
-| Céu e estrelas | `assets/scenery/sky.png` | 0,08× |
-| Planeta, ruínas e montanhas distantes | `assets/scenery/distant.png` | 0,23× |
-| Árvore gigante e cipós | `assets/scenery/midground.png` | 0,55× |
-| Plantas bioluminescentes | `assets/scenery/flora.png` | 0,82× |
-| Solo jogável | `assets/scenery/ground.png` | 1,00× |
+| Camada | Asset | Velocidade horizontal |
+|---|---|---|
+| Céu | `sky.png` | 0,08 |
+| Planeta, ruínas e montanhas | `distant.png` | 0,23 |
+| Árvore e cipós | `midground.png` | 0,55 |
+| Plantas luminosas | `flora.png` | 0,82 |
+| Plataforma jogável | `ground.png` | 1,00 |
 
-A composição usa `Parallax2D` e repetições espelhadas para reduzir as emendas entre trechos do mapa. Os PNGs foram criados a partir da arte gerada para a floresta; `sky.png` e `ground.png` são complementos montados com os recursos da cena.
+O `Parallax2D` utiliza duas cópias espelhadas da imagem para tornar o encontro entre tiles menos visível. O mapa tem 1440 unidades de largura e a câmera acompanha o viajante. Os backgrounds são filtrados linearmente quando reduzidos para a janela, preservando melhor as nuances da arte; a spritesheet do personagem continua nítida.
 
-**Instalação das imagens:** como a integração do GitHub desta sessão não aceita transferência dos binários locais, os arquivos PNG foram disponibilizados em um pacote ZIP separado na conversa. Extraia o conteúdo de `game_feel_lab_png_assets.zip` na **raiz do repositório**, preservando a estrutura `assets/scenery/`. Depois, execute a Godot para importar as imagens. Quando os PNGs estiverem no diretório, o código utilizará automaticamente as cinco camadas.
+**Como rodar:** basta executar `git pull origin main` e abrir `project.godot` na Godot 4.7. Os cinco PNGs estão no GitHub e serão importados automaticamente pelo editor. Não é necessário baixar o ZIP separadamente.
 
-Se o pacote não estiver instalado, aparece um aviso e o projeto mostra apenas o fundo JPG antigo, **sem os SVGs**. O arquivo `sky.svg` e outras imagens SVG continuam no histórico, mas não são usados por esse código.
+Controles: `A/D` para caminhar, `espaço` para pular, `J` para atacar, `1–6` para alternar efeitos, `7` para comparar parallax ligado/desligado, `H` para ocultar painel e `R` para reiniciar.
 
-Controles: `A/D` andar, `espaço` pular, `J` atacar, `1–6` efeitos de game feel, `7` comparar parallax ON/OFF, `H` ocultar painel, `R` reiniciar.
-
-Para versionar os PNGs após extrair:
-```bash
-git add assets/scenery/*.png
-git commit -m "art: install high-resolution PNG alien forest"
-git push origin main
-```
-
-O código foi revisado e os PNGs foram validados quanto a dimensões e transparência; o resultado final **ainda precisa de teste visual no editor Godot**.
+**Validação:** arquivos publicados e hashes binários conferidos; dimensões e canais alfa verificados. A renderização e a fluidez ainda precisam ser validadas visualmente na Godot.
