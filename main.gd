@@ -1,6 +1,6 @@
 extends Node2D
 ## One-room prototype to isolate and compare game-feel effects.
-## No external sprites, plugins, or addons required.
+## Traveler art uses an anchored PNG atlas; the game feel lab and test dummy remain unchanged.
 
 const MOVE_SPEED := 145.0
 const ACCELERATION := 1150.0
@@ -8,7 +8,7 @@ const FRICTION := 1400.0
 const GRAVITY := 800.0
 const JUMP_SPEED := -302.0
 const HIT_DISTANCE := 48.0
-const TRAVELER_FRAME: int = 48
+const TRAVELER_FRAME: int = 96
 const TRAVELER_FRAMES_PER_ROW: int = 5
 
 var effects := {
@@ -101,8 +101,8 @@ func build_characters() -> void:
 	player_sprite.texture = idle_frames[0]
 	# The physical collider keeps its old dimensions; only the art is scaled.
 	# Each 48 px atlas cell has a fixed foot baseline at y≈46.
-	player_sprite.scale = Vector2(0.82, 0.82)
-	player_sprite.offset = Vector2(0.0, -5.0)
+	player_sprite.scale = Vector2(0.55, 0.55)
+	player_sprite.offset = Vector2(0.0, -13.0)
 	player_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	player_visual.add_child(player_sprite)
 
@@ -375,7 +375,7 @@ func floating_damage(at: Vector2) -> void:
 # Pixel-art traveler frames are cropped directly from a real transparent PNG.
 # Grid: 5 columns × 2 rows, 48×48 pixels per cell. No runtime resizing of cells.
 func build_animation_frames() -> void:
-	var sheet: Texture2D = load("res://assets/traveler_sheet.png") as Texture2D
+	var sheet: Texture2D = load("res://assets/traveler_sheet_v2.png") as Texture2D
 	if sheet == null:
 		push_error("Traveler PNG not found: res://assets/traveler_sheet.png")
 		return

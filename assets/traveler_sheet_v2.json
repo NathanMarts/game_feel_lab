@@ -1,0 +1,31 @@
+{
+  "frame_size": [
+    96,
+    96
+  ],
+  "atlas": [
+    480,
+    192
+  ],
+  "columns": 5,
+  "rows": 2,
+  "pivot": [
+    48,
+    86
+  ],
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 5,
+      "fps": 4
+    },
+    "run": {
+      "row": 1,
+      "frames": 5,
+      "fps": 10,
+      "airborne_frame": 3,
+      "airborne_feet_y": 79
+    }
+  },
+  "source": "AI-generated key poses normalized to common coordinates; animation continuity requires in-engine review"
+}

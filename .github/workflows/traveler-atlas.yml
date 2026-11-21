@@ -1,0 +1,16 @@
+name: Validate traveler sprite atlas
+on:
+  push:
+    paths: ['assets/traveler_sheet_v2.png', 'tools/check_traveler.py', '.github/workflows/traveler-atlas.yml']
+  pull_request:
+    paths: ['assets/traveler_sheet_v2.png', 'tools/check_traveler.py']
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'Pillow>=10,<13'
+      - run: python tools/check_traveler.py

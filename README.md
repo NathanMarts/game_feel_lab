@@ -95,3 +95,19 @@ A arte de referência conceitual serve como direção de estilo; não foi aplica
 O fundo é uma floresta alienígena procedural com flora bioluminescente, insetos voadores e planetas ao longe. O parallax ainda será uma etapa futura. A aparência conceitual gerada anteriormente é uma **direção de arte**, não um screenshot real do estado atual.
 
 > A spritesheet foi conferida por análise de pixels e grid; a renderização na Godot precisa ser verificada no editor após o pull.
+
+
+## V2 — poses-chave em imagem (novembro/2026)
+
+Substituímos o desenho procedural de `main.gd` por uma spritesheet PNG real, produzida a partir de poses-chave de referência e normalizada para uso no Godot.
+
+- `assets/traveler_sheet_v2.png` — atlas **480×192 px, RGBA**, **5 colunas × 2 linhas**, células de **96×96 px**.
+- **Idle**: primeira linha, 5 poses, 4 FPS. Respiração/variação de capuz, cachecol e postura.
+- **Corrida**: segunda linha, 5 poses, 10 FPS. Contato, compressão, passagem, impulsão aérea e extensão.
+- Pés do idle em **y=86** e corrida em **y=86** exceto a pose aérea (y=79). Alinhamento por centro e referência de chão.
+- O Sprite2D mantém o collider separado. Escala e offset são intencionais para não afundar os pés na plataforma.
+- O laboratório continua com white flash, hitstop, squash/stretch, partículas, som e câmera.
+
+Valide as dimensões e o pivô com `python tools/check_traveler.py` (instale `pip install -r requirements-art.txt`).
+
+**Limite importante:** o grid e o pivô são verificáveis automaticamente; fluidez, gesto, anatomia e credibilidade da corrida ainda exigem revisão visual na Godot.
