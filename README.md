@@ -111,3 +111,25 @@ Substituímos o desenho procedural de `main.gd` por uma spritesheet PNG real, pr
 Valide as dimensões e o pivô com `python tools/check_traveler.py` (instale `pip install -r requirements-art.txt`).
 
 **Limite importante:** o grid e o pivô são verificáveis automaticamente; fluidez, gesto, anatomia e credibilidade da corrida ainda exigem revisão visual na Godot.
+
+
+## Experimento: floresta com parallax (nov/2026)
+
+A sala agora tem **três telas de largura (1440×270)**, câmera seguindo o viajante e **quatro imagens SVG em camadas** em `assets/scenery/`:
+
+| Camada | Arquivo | `scroll_scale.x` |
+|---|---|---:|
+| Céu, estrelas e planetas | `sky.svg` | 0.12 |
+| Silhuetas e ruínas distantes | `distant.svg` | 0.35 |
+| Árvore alienígena e cipós | `mid.svg` | 0.65 |
+| Solo, flores e plantas luminosas | `ground.svg` | 1.00 |
+
+As camadas são **arquivos de imagem reais** (SVG importado pela Godot), e não mais círculos e retângulos desenhados no `_draw()`. Foram criadas para serem independentes e repetíveis; **a imagem conceitual mais detalhada ainda não foi convertida nesses quatro assets**.
+
+- **A/D** para explorar até os limites do mundo e ver a diferença entre velocidades de cenário.
+- **7** para ligar/desligar parallax; quando desligado, todas as camadas usam `scroll_scale.x = 1`.
+- **H** para ocultar/mostrar a lista de testes.
+- **1–6**, **J** e **espaço** continuam com o mesmo comportamento.
+- **R** devolve o viajante à posição inicial.
+
+O sistema usa `Parallax2D` nativo da Godot. Os SVGs podem ser trocados futuramente por PNGs pintados sem mudar os controles ou a física. Caso o editor esteja aberto, aguarde a importação das novas imagens antes de executar. Esta versão **não foi executada em Godot no ambiente de criação**: validar visualmente o scroll e os limites da câmera no editor.
