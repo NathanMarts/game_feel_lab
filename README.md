@@ -113,23 +113,32 @@ Valide as dimensões e o pivô com `python tools/check_traveler.py` (instale `pi
 **Limite importante:** o grid e o pivô são verificáveis automaticamente; fluidez, gesto, anatomia e credibilidade da corrida ainda exigem revisão visual na Godot.
 
 
-## Experimento: floresta com parallax (nov/2026)
 
-A sala agora tem **três telas de largura (1440×270)**, câmera seguindo o viajante e **quatro camadas de imagens** em `assets/scenery/`. A camada mais distante é uma imagem gerada para a floresta alienígena, otimizada para 480×270; as outras são SVGs transparentes independentes:
+## Cenário alienígena com PNG em resolução original
 
-| Camada | Arquivo | `scroll_scale.x` |
+A versão atual **não usa SVG para renderizar o cenário**. O novo material de arte contém cinco imagens PNG **1672×941 px** com transparência nas camadas adequadas. Não existe redução de imagem para 480×270 durante a exportação; o código dimensiona as texturas apenas na hora de desenhá-las.
+
+| Camada | Arquivo | Deslocamento |
 |---|---|---:|
-| Fundo ilustrado com planeta, árvores e ruínas | `alien_forest.jpg` | 0.12 |
-| Silhuetas e ruínas distantes | `distant.svg` | 0.35 |
-| Árvore alienígena e cipós | `mid.svg` | 0.65 |
-| Solo, flores e plantas luminosas | `ground.svg` | 1.00 |
+| Céu e estrelas | `assets/scenery/sky.png` | 0,08× |
+| Planeta, ruínas e montanhas distantes | `assets/scenery/distant.png` | 0,23× |
+| Árvore gigante e cipós | `assets/scenery/midground.png` | 0,55× |
+| Plantas bioluminescentes | `assets/scenery/flora.png` | 0,82× |
+| Solo jogável | `assets/scenery/ground.png` | 1,00× |
 
-As camadas são **arquivos de imagem reais** (JPEG e SVGs importados pela Godot), e não mais círculos e retângulos desenhados no `_draw()`. A arte de fundo foi gerada por IA e comprimida para manter o repositório leve. O JPEG não tem a resolução da referência conceitual completa, mas já é renderizado no jogo. O antigo `sky.svg` permanece como experimento alternativo.
+A composição usa `Parallax2D` e repetições espelhadas para reduzir as emendas entre trechos do mapa. Os PNGs foram criados a partir da arte gerada para a floresta; `sky.png` e `ground.png` são complementos montados com os recursos da cena.
 
-- **A/D** para explorar até os limites do mundo e ver a diferença entre velocidades de cenário.
-- **7** para ligar/desligar parallax; quando desligado, todas as camadas usam `scroll_scale.x = 1`.
-- **H** para ocultar/mostrar a lista de testes.
-- **1–6**, **J** e **espaço** continuam com o mesmo comportamento.
-- **R** devolve o viajante à posição inicial.
+**Instalação das imagens:** como a integração do GitHub desta sessão não aceita transferência dos binários locais, os arquivos PNG foram disponibilizados em um pacote ZIP separado na conversa. Extraia o conteúdo de `game_feel_lab_png_assets.zip` na **raiz do repositório**, preservando a estrutura `assets/scenery/`. Depois, execute a Godot para importar as imagens. Quando os PNGs estiverem no diretório, o código utilizará automaticamente as cinco camadas.
 
-O sistema usa `Parallax2D` nativo da Godot. Os SVGs podem ser trocados futuramente por PNGs pintados sem mudar os controles ou a física. Caso o editor esteja aberto, aguarde a importação das novas imagens antes de executar. Esta versão **não foi executada em Godot no ambiente de criação**: validar visualmente o scroll e os limites da câmera no editor.
+Se o pacote não estiver instalado, aparece um aviso e o projeto mostra apenas o fundo JPG antigo, **sem os SVGs**. O arquivo `sky.svg` e outras imagens SVG continuam no histórico, mas não são usados por esse código.
+
+Controles: `A/D` andar, `espaço` pular, `J` atacar, `1–6` efeitos de game feel, `7` comparar parallax ON/OFF, `H` ocultar painel, `R` reiniciar.
+
+Para versionar os PNGs após extrair:
+```bash
+git add assets/scenery/*.png
+git commit -m "art: install high-resolution PNG alien forest"
+git push origin main
+```
+
+O código foi revisado e os PNGs foram validados quanto a dimensões e transparência; o resultado final **ainda precisa de teste visual no editor Godot**.
