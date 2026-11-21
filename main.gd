@@ -92,7 +92,7 @@ func build_stage() -> void:
 # Slower scroll_scale means a more distant layer.
 func build_scenery() -> void:
 	# Native-resolution PNG art (1672x941) is scaled only for display, never resampled on disk.
-	# Extract assets/scenery/*.png from the high-resolution art pack into this repository.
+	# All five PNG textures are tracked in the repository and imported by Godot.
 	var specs: Array = [
 		["res://assets/scenery/sky.png", 0.08],
 		["res://assets/scenery/distant.png", 0.23],
@@ -100,10 +100,6 @@ func build_scenery() -> void:
 		["res://assets/scenery/flora.png", 0.82],
 		["res://assets/scenery/ground.png", 1.0],
 	]
-	if not ResourceLoader.exists("res://assets/scenery/sky.png"):
-		push_warning("High-resolution PNG scenery is not installed. Extract the PNG art pack into the project.")
-		# One static legacy JPG until the PNGs are installed; deliberately do not use SVGs.
-		specs = [["res://assets/scenery/alien_forest.jpg", 0.15]]
 	for spec in specs:
 		var file_path: String = str(spec[0])
 		var speed: float = float(spec[1])
@@ -122,7 +118,7 @@ func build_scenery() -> void:
 		for copy_index in range(2):
 			var sprite := Sprite2D.new()
 			sprite.texture = texture
-			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+				sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			sprite.centered = false
 			sprite.flip_h = copy_index == 1
 			sprite.position.x = float(copy_index) * 480.0
