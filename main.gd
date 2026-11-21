@@ -18,6 +18,7 @@ var effects := {
 	"shake": true,
 	"particles": true,
 	"sfx": true,
+	"parallax": true,
 }
 var player: CharacterBody2D
 var player_visual: Node2D
@@ -40,6 +41,8 @@ var tween_dummy: Tween
 var hitstop_running := false
 var time_since_start := 0.0
 var audio_nodes := {}
+var parallax_layers: Array[Parallax2D] = []
+var parallax_speeds: Array[float] = []
 var idle_frames: Array[Texture2D] = []
 var walk_frames: Array[Texture2D] = []
 var animation_clock: float = 0.0
@@ -112,6 +115,8 @@ func build_scenery() -> void:
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		layer.add_child(sprite)
 		add_child(layer)
+		parallax_layers.append(layer)
+		parallax_speeds.append(speed)
 
 func build_characters() -> void:
 	player = CharacterBody2D.new()
@@ -224,10 +229,10 @@ func make_label(content: String, pos: Vector2, size: int, color: Color) -> Label
 
 func update_hud() -> void:
 	var lines := ["TESTES (ligar/desligar)"]
-	for row in [["1", "flash", "White flash"], ["2", "squash", "Squash/stretch"], ["3", "hitstop", "Hitstop"], ["4", "shake", "Camera shake"], ["5", "particles", "Partículas"], ["6", "sfx", "Sons"]]:
+	for row in [["1", "flash", "White flash"], ["2", "squash", "Squash/stretch"], ["3", "hitstop", "Hitstop"], ["4", "shake", "Camera shake"], ["5", "particles", "Partículas"], ["6", "sfx", "Sons"], ["7", "parallax", "Parallax"]]:
 		lines.append("%s  %s: %s" % [row[0], row[2], "ON" if effects[row[1]] else "OFF"])
 	effects_label.text = "\n".join(lines)
-	counter_label.text = "ACERTOS: %d    |    R: reiniciar" % hit_count
+	counter_label.text = "ACERTOS: %d  |  R: reiniciar  H: ocultar testes" % hit_count
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not (event is InputEventKey):
@@ -237,14 +242,20 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	var keys := {
 		KEY_1: "flash", KEY_2: "squash", KEY_3: "hitstop",
-		KEY_4: "shake", KEY_5: "particles", KEY_6: "sfx",
+		KEY_4: "shake", KEY_5: "particles", KEY_6: "sfx", KEY_7: "parallax",
 	}
 	if keys.has(key_event.physical_keycode):
 		var effect: String = keys[key_event.physical_keycode]
 		effects[effect] = not effects[effect]
+		if effect == "parallax":
+			for i in range(parallax_layers.size()):
+				var speed: float = parallax_speeds[i] if effects["parallax"] else 1.0
+				parallax_layers[i].scroll_scale.x = speed
 		if effect == "flash" and not effects[effect]:
 			dummy_sprite.material.set_shader_parameter("flash_strength", 0.0)
 		update_hud()
+	elif key_event.physical_keycode == KEY_H:
+		effects_label.visible = not effects_label.visible
 	elif key_event.physical_keycode == KEY_R:
 		Engine.time_scale = 1.0
 		player.position = Vector2(132, 220)
